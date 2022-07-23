@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-
+import axios from 'axios'
 import cartItems from '../../cartItems'
 
-const url = 'https://course-api.com/react-useReducer-cart-project';
+const url = 'https://course-api.com/react-useReducer-cart-project'
 
 const initialState = {
   cartItems: cartItems,
@@ -11,11 +11,16 @@ const initialState = {
   isLoading: true,
 }
 
-export const getCartItems = createAsyncThunk('cart/getCartItems', () => {
-  return fetch(url)
-    .then((resp) => resp.json())
-    .catch((err) => console.log(err));
-});
+export const getCartItems = createAsyncThunk('cart/getCartItems', async (
+  _, thunkAPI
+) => {
+  try {
+    const resp = await axios(url)
+    return resp.data
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.payload.response)
+  }
+})
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -31,12 +36,11 @@ const cartSlice = createSlice({
     },
     toggleAmount: (state, { payload }) => {
       const currentItem = state.cartItems.find((item) => item.id === payload.id)
-      if (payload.toggle === "inc"){
+      if (payload.toggle === 'inc') {
         currentItem.amount += 1
         state.amount += 1
-      }
-      else if(payload.toggle === "dec"){
-        currentItem.amount -= 1  
+      } else if (payload.toggle === 'dec') {
+        currentItem.amount -= 1
         state.amount -= 1
       }
     },
@@ -44,29 +48,30 @@ const cartSlice = createSlice({
       let total = 0
       let amount = 0
 
-      state.cartItems.forEach(item => {
+      state.cartItems.forEach((item) => {
         total += item.amount * item.price
         amount += item.amount
       })
 
       state.total = parseFloat(total.toFixed(2))
       state.amount = amount
-    }
+    },
   },
   extraReducers: {
     [getCartItems.pending]: (state) => {
-      state.isLoading = true;
+      state.isLoading = true
     },
     [getCartItems.fulfilled]: (state, action) => {
-      state.isLoading = false;
-      state.cartItems = action.payload;
+      state.isLoading = false
+      state.cartItems = action.payload
     },
-    [getCartItems.rejected]: (state) => {
-      state.isLoading = false;
+    [getCartItems.rejected]: (state, action) => {
+      state.isLoading = false
     },
   },
 })
 
-export const { clearCart, removeItem, toggleAmount, calculateTotals } = cartSlice.actions
+export const { clearCart, removeItem, toggleAmount, calculateTotals } =
+  cartSlice.actions
 
 export default cartSlice.reducer
